@@ -187,3 +187,1145 @@ Log_in::~Log_in()
 {
     delete ui;
 }
+#ifndef MAINSCREEN_H
+#define MAINSCREEN_H
+
+#include <QWidget>
+#include <QPainter>
+#include <QSqlDatabase>
+#include <QMessageBox>
+#include <QSqlTableModel>
+#include <QDebug>
+#include <QSqlError>
+#include <QSqlQueryModel>
+#include "updateProfile.h"
+#include "findRidePage.h"
+#include "createRide.h"
+
+
+
+namespace Ui {
+class MainScreen;
+}
+
+class MainScreen : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit MainScreen(QWidget *parent = 0);
+    ~MainScreen();
+
+    void paintEvent(QPaintEvent *);
+
+    //User name entered on the connection login page
+    QString usersNames;
+    void init();
+    void myTrips();
+
+    updateProfile *updatePage;
+    findRidePage* findRide;
+    createRide* createRidePage;
+
+
+
+signals:
+    void backToLogIn();
+
+private slots:
+    void onEditBtnClicked();
+
+private:
+    Ui::MainScreen *ui;
+
+    QSqlDatabase dataBase;
+    QSqlTableModel *tableModel;
+};
+
+#endif // MAINSCREEN_H
+#ifndef RESERVECAR_H
+#define RESERVECAR_H
+#include <QDialog>
+#include <QStringList>
+#include <QPainter>
+#include <QMessageBox>
+#include <QSqlQuery>
+#include <QDebug>
+#include <QSqlError>
+#include <QSqlDatabase>
+#include <QDateTime>
+#include <QtGlobal>
+
+namespace Ui {
+class reserveCar;
+}
+
+
+
+class reserveCar : public QDialog
+{
+    Q_OBJECT
+
+public:
+    explicit reserveCar(QWidget *parent = 0);
+    ~reserveCar();
+
+    void setReserveData(QStringList rowData);
+    void paintEvent(QPaintEvent *);
+    void confirm_Button_On();
+
+    QString inputName;
+    QString generateOrderNumber(int length);
+
+private:
+    Ui::reserveCar *ui;
+
+};
+
+#endif // RESERVECAR_H
+#ifndef SIGN_IN_H
+#define SIGN_IN_H
+
+#include <QMessageBox>
+#include <QString>
+#include <QSqlQueryModel>
+#include <QSqlQuery>
+#include <QDebug>
+#include <QSqlError>
+#include <QPainter>
+
+namespace Ui {
+class Sign_In;
+}
+
+class Sign_In : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit Sign_In(QWidget *parent = 0);
+    ~Sign_In();
+
+    void paintEvent(QPaintEvent *);
+    void cleanLineEdit();
+    void connectDatabase();
+    void insertData();
+
+signals:
+    //signals no need to complement
+    void backLogIn();
+
+private slots:
+    void onsignBtnclicked();
+    void getInput();
+
+private:
+    Ui::Sign_In *ui;
+    QSqlDatabase myData;
+
+    QString signName;
+    QString signPassword;
+    QString signEmail;
+    QString signPhone;
+
+
+};
+
+#endif // SIGN_IN_H
+#ifndef UPDATEPROFILE_H
+#define UPDATEPROFILE_H
+
+#include <QDialog>
+#include <QPainter>
+#include <QSqlQueryModel>
+#include <QMessageBox>
+
+namespace Ui {
+class updateProfile;
+}
+
+class updateProfile : public QDialog
+{
+    Q_OBJECT
+
+public:
+    explicit updateProfile(QWidget *parent = 0);
+    ~updateProfile();
+
+    void paintEvent(QPaintEvent *);
+
+
+private slots:
+    void onupdateBtnclicked();
+
+    void oncancelBtnclicked();
+
+
+private:
+    Ui::updateProfile *ui;
+
+
+};
+
+#endif // UPDATEPROFILE_H
+#include "adminstrator.h"
+#include "ui_adminstrator.h"
+
+adminstrator::adminstrator(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::adminstrator)
+{
+    ui->setupUi(this);
+    this->setFixedSize(800, 600);
+    this->setWindowTitle("Adminstrator");
+
+    appendData();
+//    connect(ui->pushButton, &QPushButton::clicked, this, &adminstrator::handlePushButtonClick);
+    connect(ui->searchLine, SIGNAL(textChanged(QString)),this, SLOT(search()));
+
+}
+
+
+void adminstrator::appendData()
+{
+    tableModel = new QSqlTableModel;
+    tableModel->setTable("users");
+    tableModel->select();
+    tableModel->removeColumn(5); //id will not be showed
+    ui->usersView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+////    ui->usersView->verticalHeader()->setVisible(false);
+    ui->usersView->setModel(tableModel);
+
+}
+
+void adminstrator::paintEvent(QPaintEvent *)
+{
+    QPainter painter(this);
+    QPixmap pix;
+    pix.load(":/images/blue.png");
+    painter.drawPixmap(0,0,pix);
+
+}
+
+
+void adminstrator::search()
+{
+    QSqlQueryModel *model=new QSqlQueryModel;
+    QString search,
+            data;
+    search = ui->searchLine->text();
+    data = "select userName as userName ,password as password,email as email, phoneNumber as "
+           "phoneNumber, orderNumber as orderNumber from users where userName LIKE '%"+search+"%'";
+    model->setQuery(data);
+    ui->usersView->setModel(model);
+
+}
+
+adminstrator::~adminstrator()
+{
+    delete ui;
+
+}
+
+void adminstrator::handlePushButtonClick()
+{
+    emit this->backToLogIn();
+}
+
+#include "clickableLabel.h"
+
+clickableLabel::clickableLabel(QWidget* parent, Qt::WindowFlags f)
+    : QLabel(parent) {
+
+}
+
+clickableLabel::~clickableLabel() {}
+
+void clickableLabel::mousePressEvent(QMouseEvent *event) {
+    //clickable label
+    emit clicked();
+}
+#include "createRide.h"
+#include "ui_createRide.h"
+
+
+createRide::createRide(QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::createRide)
+{
+    ui->setupUi(this);
+    this->setWindowTitle("Create new ride");
+
+
+}
+
+createRide::~createRide()
+{
+    delete ui;
+}
+
+void createRide::paintEvent(QPaintEvent *)
+{
+    QPainter painter(this);
+    QPixmap pix;
+    pix.load(":/images/rose2.png");
+    painter.drawPixmap(0,0,pix);
+
+}
+
+void createRide::onsubmitBtnclicked()
+{
+//    QString appendData;
+//    appendData = "Insert into vehicles (carName,carModel,carCapacity,engineCapacity,colour,carOwner) "
+//                 "values('"+newCarName+"','"+newCarModel+"','"+newCarCapacity+"','"+newCarEngine+"','"
+//                          +newCarColor+"','"+newCarOwner+"')";
+//     QSqlQueryModel *model = new QSqlQueryModel;
+    getInput();
+    //retrieve data from database
+    sql.prepare("Insert Into vehicles(carName,carModel,carCapacity,engineCapacity,colour,carOwner)"
+                "Values (:carName, :carModel, :carCapacity, :engineCapacity, :colour, :carOwner)");
+    sql.bindValue(":carName", newCarName);
+    sql.bindValue(":carModel", newCarModel);
+    sql.bindValue(":carCapacity", newCarCapacity);
+    sql.bindValue(":engineCapacity", newCarEngine);
+    sql.bindValue(":colour", newCarColor);
+    sql.bindValue(":carOwner", newCarOwner);
+
+    if(newCarName.isEmpty() || newCarModel.isEmpty() || newCarEngine.isEmpty()
+            || newCarColor.isEmpty() || newCarOwner.isEmpty())
+    {
+        QMessageBox::information(this, "failed", "please fill in all inforamtion");
+    }
+    else if(sql.exec())
+    {
+        QMessageBox::information(this, "Submited", "Submited successful");
+        this->hide();
+        clearInput();
+    }
+    else
+    {
+         QMessageBox::about(this, "failed", "Submited failed, please check all the informations");
+         qDebug()<<sql.lastError();
+    }
+
+}
+
+void createRide::getInput()
+{
+    newCarName = ui->carName->text();
+    newCarModel = ui->carModel->text();
+    newCarCapacity = ui->carCapacity->text();
+    newCarEngine = ui->carEngine->text();
+    newCarColor = ui->carColor->text();
+    newCarOwner = ui->carOwner->text();
+}
+
+void createRide::clearInput()
+{
+    ui->carName->clear();
+    ui->carModel->clear();
+    ui->carCapacity->clear();
+    ui->carEngine->clear();
+    ui->carColor->clear();
+    ui->carOwner->clear();
+}
+
+#include "findRidePage.h"
+#include "ui_findRidePage.h"
+
+findRidePage::findRidePage(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::findRidePage)
+{
+    ui->setupUi(this);
+    this->setFixedSize(800, 600);
+    this->setWindowTitle("Find Ride");
+    connect(ui->searchArea, SIGNAL(textChanged(QString)),this, SLOT(searchFunc()));
+    connectData();
+    appendData();
+    refreshData();
+}
+
+findRidePage::~findRidePage()
+{
+    database.close();
+    delete ui;
+}
+
+void findRidePage::paintEvent(QPaintEvent *)
+{
+    QPainter painter(this);
+    QPixmap pix;
+    pix.load(":/images/Mystic.png");
+    painter.drawPixmap(0,0,pix);
+}
+
+void findRidePage::appendData()
+{
+    ui->tableView->verticalHeader()->setVisible(false);   //hide header
+    ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tableView->setModel(sqlModel);
+}
+
+
+QStringList findRidePage::getCurrentData()
+{
+    QStringList rowData;
+    //get current row data
+    int row = ui->tableView->currentIndex().row();
+    QAbstractItemModel *model = ui->tableView->model();
+    //QModelIndex index0 = model->index(row, 0);  //two ways to get index
+
+    if(row != -1)
+    {
+        //get the value of the whole row that user chosed
+        rowData << model->index(row, 0).data().toString();
+        rowData << model->index(row, 1).data().toString();
+        rowData << model->index(row, 2).data().toString();
+        rowData << model->index(row, 3).data().toString();
+        rowData << model->index(row, 4).data().toString();
+        rowData << model->index(row, 5).data().toString();
+       //rowData << model->data(index0).toString(); as another way
+    }
+    return rowData;
+}
+
+
+void findRidePage::onbackBtnclicked()
+{
+    emit this->backToMainPage();
+
+}
+
+void findRidePage::onreserveBtnclicked()
+{
+    reservePage = new reserveCar;
+    //use input name to match database
+    reservePage->inputName = inputName;
+    QStringList rowData;
+    rowData = this->getCurrentData();
+
+    if(rowData.isEmpty()) {
+        QMessageBox::information(this, tr("Alert") , tr("Please choose a car!"));
+        return;
+    }
+    else {
+        reservePage->setReserveData(rowData);
+    }
+
+    qDebug() << getCurrentData();
+    reservePage->activateWindow();
+    reservePage->exec();
+}
+
+void findRidePage::searchFunc()
+{
+    QSqlQueryModel *model=new QSqlQueryModel;
+    QString search,
+            data;
+    search = ui->searchArea->text();
+    data = "select carName as carName ,carModel as carModel,carCapacity as carCapacity, colour as "
+           "colour, carOwner as carOwner from vehicles where carName LIKE '%"+search+"%'";
+    model->setQuery(data);
+    ui->tableView->setModel(model);
+}
+
+void findRidePage::connectData()
+{
+    if(QSqlDatabase::contains("qt_sql_default_connection")) {
+
+        database = QSqlDatabase::database("qt_sql_default_connection");
+    }
+    else {
+        database = QSqlDatabase::addDatabase("QSQLITE");
+    }
+
+    database.setHostName("localhost");
+    database.setUserName("Root");
+    database.setPassword("");
+    database.setDatabaseName("/Users/a233/Desktop/Car pool/dataBase/usersData.db");
+    if(database.open()) {
+        sqlModel = new QSqlQueryModel();
+        sqlModel->setQuery("select carName, carModel, carCapacity, engineCapacity, colour, "
+                           "carOwner from vehicles");
+    }
+    else {
+        QMessageBox::information(this, "fail", "open failed");
+    }
+}
+
+void findRidePage::refreshData()
+{
+    //remove row by row
+    QAbstractItemModel *model = ui->tableView->model();
+    int rowCount = model->rowCount();
+    for(int r = rowCount - 1; r >= 0; r--) {
+        model->removeRow(r);
+    }
+
+    appendData();
+
+}
+#include "log_in.h"
+#include "ui_log_in.h"
+
+/*
+ * This is the Login Page
+ * As the start interface allows user login
+ * Also connect to sign up and Admin interfaces
+ *
+ */
+
+Log_in::Log_in(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::Log_in)
+{
+    ui->setupUi(this);
+    this->setFixedSize(1100, 700);
+    this->setWindowTitle("Log in");
+    ui->userNameBtn->setFocus();  //set the cursor on user name area
+    ui->logInSuccessful->setVisible(false);
+
+    // operator new pages of sign in, main screen and adminstrator
+    signIn = new Sign_In;
+    mainPage = new MainScreen;
+    admin = new adminstrator;
+
+    /*
+     * Connect to sign in page and back
+     * The login page provides an interface
+     * to back to login from the main and sign up pages
+     *
+     */
+    connect(ui->SignInBtn, &clickableLabel::clicked,this, [=](){
+        // When the user click sign up button
+        // The sign up page shows
+        // Log in page hide
+        signIn->show();
+        this->close();
+    });
+
+    connect(signIn, &Sign_In::backLogIn,this, [=](){
+        cleanLineEdit();
+        signIn->hide();
+        this->show();
+    });
+
+    connect(mainPage, &MainScreen::backToLogIn,this, [=](){
+        QTimer::singleShot(500, this, [=](){
+            mainPage->hide();
+            this->show();
+        });
+    });
+
+    connect(admin, &adminstrator::backToLogIn,this, [=](){
+        admin->hide();
+        this->show();
+    });
+}
+
+// this method is for inserting the background image
+void Log_in::paintEvent(QPaintEvent *)
+{
+    QPainter painter(this);
+    QPixmap pix;
+    pix.load(":/images/CoverMain.png");
+    painter.drawPixmap(0,0,pix);
+
+}
+
+void Log_in::onLogBtnclicked()
+{
+    connectDatabase();
+
+    //get username and password from user input areas
+
+
+    if(db.open()) {
+        matchDatabase();
+    }else {
+        QMessageBox::information(this, "database", "connection failed");
+    }
+
+    // if database close in there, then the data cannot match
+}
+
+
+void Log_in::connectDatabase()
+{
+    /*
+     * The if statement is determine whether call the "QSQLITE repeatedly" while using data
+     * If there's no sepecfic name, then the default one is "qt_sql_default_connection"
+     *
+     */
+    if(QSqlDatabase::contains("qt_sql_default_connection")) {
+
+        db = QSqlDatabase::database("qt_sql_default_connection");
+    }
+    else {
+        db = QSqlDatabase::addDatabase("QSQLITE");
+    }
+
+    db.setHostName("localhost");
+    db.setUserName("Root");
+    db.setPassword("");
+    db.setDatabaseName("/Users/a233/Desktop/Car pool/dataBase/usersData.db");
+}
+
+void Log_in::matchDatabase()
+{
+    QString userName = ui->userNameBtn->text();
+    QString password = ui->passwordBtn->text();
+//    qDebug <<userName + password;  //get data succeed
+    qDebug()<<"connection succeed";
+    QSqlQuery query(QSqlDatabase::database("QSQLITE"));
+    query.prepare(QString("Select * from users Where userName = :userName "
+                          "And password = :password"));
+    // retrived data from database
+    query.bindValue(":userName", userName);
+    query.bindValue(":password", password);
+
+    if(!query.exec()) {
+        QMessageBox::information(this, "failed", "faile to execute");
+    }else {
+        if(query.next()) {
+            //next is to determine whether the matching result is in the database
+            //matching from 0
+            QString userNameFromDB = query.value(0).toString();
+            QString passwordFromDB = query.value(1).toString();
+
+            if(userNameFromDB == "Ellie" && passwordFromDB == "1137") {
+                qDebug() <<"Admin login";   //testing Admin
+                adminShow();
+            }
+            else if(userNameFromDB == userName && passwordFromDB == password)
+            {
+                mainScreenShow();
+            }
+        }
+        else
+        {
+            QMessageBox::information(this, "failed", "Log in failed, Please check your username or "
+                                                     "password");
+        }
+    }
+}
+
+void Log_in::adminShow()
+{
+    QTimer::singleShot(500, this, [=](){
+        ui->logInSuccessful->setVisible(true);
+        QTimer::singleShot(1000, this, [=](){
+            admin->show();
+            this->hide();
+            ui->logInSuccessful->setVisible(false);
+        });
+    });
+}
+
+void Log_in::mainScreenShow()
+{
+    QString userName = ui->userNameBtn->text();
+    //Pause 0.5 second when login successed for better user experience
+    QTimer::singleShot(500, this, [=](){
+        ui->logInSuccessful->setVisible(true);
+    });
+    QTimer::singleShot(1500, this, [=](){
+        // username of main page is inherited to here
+        mainPage->usersNames = userName;
+        this->hide();
+        mainPage->show();
+        //declear in mainPage, implement in here.
+        //Otherwise the obtained data will be covered
+        mainPage->init();
+        ui->logInSuccessful->setVisible(false);
+        cleanLineEdit();
+    });
+
+}
+
+void Log_in::cleanLineEdit()
+{
+    ui->userNameBtn->clear();
+    ui->passwordBtn->clear();
+
+}
+
+Log_in::~Log_in()
+{
+    delete ui;
+}
+
+#include "log_in.h"
+#include <QApplication>
+
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+    Log_in w; //log in page
+    w.show();
+
+    return a.exec();
+}
+#include "mainScreen.h"
+#include "ui_mainScreen.h"
+
+MainScreen::MainScreen(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::MainScreen)
+{
+    ui->setupUi(this);
+    this->setFixedSize(1100, 700);   //fix screen size
+    this->setWindowTitle("Main Page");
+
+    updatePage = new updateProfile;
+    findRide = new findRidePage;
+
+   //Widget default by the second screen
+    ui->stackedWidget->setCurrentIndex(1);
+    //switch to my trip
+    connect(ui->tripsBtn, &QPushButton::clicked,this, [this](){
+        myTrips();
+        ui->stackedWidget->setCurrentIndex(0);
+    });
+    connect(ui->backAccountBtn, &QPushButton::clicked,this, [this](){
+        ui->stackedWidget->setCurrentIndex(1);
+    });
+
+
+    connect(ui->goBack, &clickableLabel::clicked,this, [this](){
+        emit this->backToLogIn();
+       //emit reminds it is signal
+    });
+
+    //go to reserve interface
+    connect(ui->findRideBtn, &QPushButton::clicked,this, [this](){
+        findRide->inputName = usersNames;
+        findRide->show();
+        this->hide();
+    });
+
+    connect(findRide, &findRidePage::backToMainPage,this, [this](){
+        findRide->hide();
+        this->show();
+    });
+
+   createRidePage = new createRide;
+   connect(ui->creatRideBtn, &QPushButton::clicked,this, [this](){
+       createRidePage->show();
+   });
+
+}
+
+void MainScreen::paintEvent(QPaintEvent *)
+{
+    QPainter painter(this);
+    QPixmap pix;
+    pix.load(":/images/rose2.png");
+    painter.drawPixmap(0,0,pix);
+}
+
+void MainScreen::init()
+{
+    //testing if get username from login class
+    qDebug() <<usersNames;
+    QString sql_user;
+//    To get the name, email, phone number separately, because the areas of table view are not together
+    sql_user ="select userName as userName from users where userName='"+usersNames+"'";
+    QSqlQueryModel *sqlModel = new QSqlQueryModel;
+    sqlModel->setQuery(sql_user);\
+    ui->showUserName->horizontalHeader()->setVisible(false);
+    ui->showUserName->verticalHeader()->setVisible(false);
+    ui->showUserName->setShowGrid(false);
+    ui->showUserName->setModel(sqlModel);
+
+    //for phone number
+    QString sql_user2;
+    sql_user2 ="select phoneNumber as phoneNumber from users where userName='"+usersNames+"'";
+    QSqlQueryModel *sqlModel2 = new QSqlQueryModel;
+    sqlModel2->setQuery(sql_user2);
+    ui->showPhoneNumber->horizontalHeader()->setVisible(false);
+    ui->showPhoneNumber->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->showPhoneNumber->verticalHeader()->setVisible(false);
+    ui->showPhoneNumber->setShowGrid(false);
+    ui->showPhoneNumber->setModel(sqlModel2);
+
+//    //for email
+    QString sql_user3;
+    sql_user3 ="select email as Email from users where userName='"+usersNames+"'";
+    QSqlQueryModel *sqlModel3 = new QSqlQueryModel;
+    sqlModel3->setQuery(sql_user3);\
+    ui->showEmail->horizontalHeader()->setVisible(false);
+    ui->showEmail->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->showEmail->verticalHeader()->setVisible(false);
+    ui->showEmail->setShowGrid(false);
+    ui->showEmail->setModel(sqlModel3);
+}
+
+void MainScreen::myTrips()
+{
+    QString sql_orderNum;
+    sql_orderNum ="select orderNumber as orderNumber from users where userName='"+usersNames+"'";
+    QSqlQueryModel *sqlModel4 = new QSqlQueryModel;
+    sqlModel4->setQuery(sql_orderNum);\
+    ui->orderNumber->horizontalHeader()->setVisible(false);
+    ui->orderNumber->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->orderNumber->verticalHeader()->setVisible(false);
+    ui->orderNumber->setShowGrid(false);
+    ui->orderNumber->setModel(sqlModel4);
+}
+
+void MainScreen::onEditBtnClicked()
+{
+    updatePage->show();
+}
+
+MainScreen::~MainScreen()
+{
+    delete ui;
+}
+//#include "reserveCar.h"
+//#include "ui_reserveCar.h"
+
+
+//reserveCar::reserveCar(QWidget *parent) :
+//    QDialog(parent),
+//    ui(new Ui::reserveCar)
+//{
+//    ui->setupUi(this);
+//    this->setFixedSize(500, 500);   //fix screen size
+//    this->setWindowTitle("Reserve Cars");
+
+//    connect(ui->confirmBtn, &clickableLabel::clicked, [=](){
+//        confirm_Button_On();
+//    });
+
+//}
+
+//reserveCar::~reserveCar()
+//{
+//    delete ui;
+//}
+
+//void reserveCar::setReserveData(QStringList rowData)
+//{
+//    ui->carName->setText(rowData.at(0));
+//    ui->carModel->setText(rowData.at(1));
+//    ui->carSeats->setText(rowData.at(2));
+//    ui->carEngine->setText(rowData.at(3) + "L");
+//    ui->carColour->setText(rowData.at(4));
+//    ui->carOwner->setText(rowData.at(5));
+//}
+
+//void reserveCar::paintEvent(QPaintEvent *)
+//{
+//    QPainter painter(this);
+//    QPixmap pix;
+//    pix.load(":/images/white.png");
+//    painter.drawPixmap(0,0,pix);
+
+//}
+
+//void reserveCar::confirm_Button_On()
+//{
+//    qDebug() <<inputName;
+//    QString orderNumber = generateOrderNumber(6);
+//    QMessageBox::information(this, "Order Number", "Thank you! "
+//                            "Your order number is: " + orderNumber);
+//    QString orders;
+//    orders = QString("Update users "
+//                     "set orderNumber = '"+orderNumber+"' Where userName = '"+inputName+"' ");
+
+//    QSqlQuery sql;
+//    if(sql.exec(orders)) {
+//        qDebug() <<"Update successed";
+//    }
+//    else {
+//        qDebug() <<"failed to get Order Number";
+//        qDebug() <<sql.lastError();
+//    }
+
+//}
+
+//QString reserveCar::generateOrderNumber(int length)
+//{
+//    qsrand(QDateTime::currentMSecsSinceEpoch());
+//    const char chrs[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+//        int chrs_size = sizeof(chrs);
+
+//        char* ch = new char[length + 1];
+//        memset(ch, 0, length + 1);
+//        int randomx = 0;
+//        for (int i = 0; i < length; ++i)
+//        {
+//            randomx= rand() % (chrs_size - 1);
+//            ch[i] = chrs[randomx];
+//        }
+//        QString ret(ch);
+//        delete[] ch;
+//        return ret;
+//}
+
+#include "reserveCar.h"
+#include "ui_reserveCar.h"
+#include <QPainter>
+#include <QMessageBox>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QDebug>
+#include <random>
+
+reserveCar::reserveCar(QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::reserveCar)
+{
+    ui->setupUi(this);
+    this->setFixedSize(500, 500);   // Fix screen size
+    this->setWindowTitle("Reserve Cars");
+
+    connect(ui->confirmBtn, &clickableLabel::clicked, this, [=](){
+        confirm_Button_On();
+    });
+}
+
+reserveCar::~reserveCar()
+{
+    delete ui;
+}
+
+void reserveCar::setReserveData(QStringList rowData)
+{
+    ui->carName->setText(rowData.at(0));
+    ui->carModel->setText(rowData.at(1));
+    ui->carSeats->setText(rowData.at(2));
+    ui->carEngine->setText(rowData.at(3) + "L");
+    ui->carColour->setText(rowData.at(4));
+    ui->carOwner->setText(rowData.at(5));
+}
+
+void reserveCar::paintEvent(QPaintEvent *)
+{
+    QPainter painter(this);
+    QPixmap pix;
+    pix.load(":/images/white.png");
+    painter.drawPixmap(0, 0, pix);
+}
+
+void reserveCar::confirm_Button_On()
+{
+    qDebug() << inputName;
+    QString orderNumber = generateOrderNumber(6);
+    QMessageBox::information(this, "Order Number", "Thank you! Your order number is: " + orderNumber);
+    QString orders = QString("Update users set orderNumber = '%1' Where userName = '%2'").arg(orderNumber, inputName);
+
+    QSqlQuery sql;
+    if(sql.exec(orders)) {
+        qDebug() << "Update succeeded";
+    }
+    else {
+        qDebug() << "Failed to get Order Number";
+        qDebug() << sql.lastError();
+    }
+}
+
+QString reserveCar::generateOrderNumber(int length)
+{
+    std::mt19937 gen(QDateTime::currentMSecsSinceEpoch()); // Seed with current time
+    std::uniform_int_distribution<> dis(0, 61); // Distribution for index
+
+    const char chrs[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    QString ret;
+    for (int i = 0; i < length; ++i) {
+        ret += chrs[dis(gen)];
+    }
+    return ret;
+}
+#include "Sign_In.h"
+#include "ui_Sign_In.h"
+#include "log_in.h"
+
+Sign_In::Sign_In(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::Sign_In)
+{
+    ui->setupUi(this);
+    this->setFixedSize(1100, 700);   //fix screen size
+    this->setWindowTitle("Sign up");
+
+    connect(ui->backLog, &clickableLabel::clicked, this, [=](){
+        cleanLineEdit();
+        emit this->backLogIn();
+    });
+}
+
+void Sign_In::paintEvent(QPaintEvent *)
+{
+    QPainter painter(this);
+    QPixmap pix;
+    pix.load(":/images/CoverMain.png");
+    painter.drawPixmap(0,0,pix);
+}
+
+void Sign_In::onsignBtnclicked()
+{
+    connectDatabase();
+
+    if(myData.open()) {
+//        qDebug() <<"database connect succeed"<<endl;
+        getInput();
+        QSqlQuery sql;
+        QString checkExist = "select * from users where userName = '"+signName+"' ";
+
+        if(signName.isEmpty() || signPassword.isEmpty() ||
+                signEmail.isEmpty() || signPhone.isEmpty())
+        {
+            QMessageBox::about(this, "sign up failed", "Please Please fill in all the information");
+        }
+        else if(sql.exec(checkExist))
+        {
+            if(sql.next() == true)
+            {
+                QMessageBox::information(this, "Not Inserted", "This user name already exist");
+            }
+            else if(sql.next() == false)
+            {
+                insertData();
+                cleanLineEdit();
+            }
+        }
+
+    }else {
+        QMessageBox::information(this, "Not connected", "database is not conntected");
+    }
+}
+
+void Sign_In::connectDatabase()
+{
+    //prevent errors due to called repeatly
+    if(QSqlDatabase::contains("qt_sql_default_connection")) {
+
+        myData = QSqlDatabase::database("qt_sql_default_connection");
+    }
+    else {
+        myData = QSqlDatabase::addDatabase("QSQLITE");
+    }
+
+    myData.setHostName("localhost");
+    myData.setUserName("Root");
+    myData.setPassword("");
+    //database path needs to be integral
+    myData.setDatabaseName("/Users/a233/Desktop/Car pool/dataBase/usersData.db");
+}
+
+void Sign_In::insertData()
+{
+    getInput();
+    QSqlQuery sql2;
+     //retreive data from database
+    sql2.prepare("INSERT INTO users (userName, password, email, phoneNumber)"
+                "VALUES (:userName, :password, :email, :phoneNumber)");
+    sql2.bindValue(":userName", signName);
+    sql2.bindValue(":password", signPassword);
+    sql2.bindValue(":email", signEmail);
+    sql2.bindValue(":phoneNumber", signPhone);
+    if (sql2.exec())
+    {
+        QMessageBox::about(this, "Successful", "Sign Up successful, please back to Log in");
+    }
+    else {
+        QMessageBox::about(this, "failed", "Sign Up failed, please check if connect database");
+    }
+}
+
+void Sign_In::getInput()
+{
+    signName = ui->fullNameBtn->text();
+    signPassword = ui->passwordBtn->text();
+    signEmail = ui->emailBtn->text();
+    signPhone = ui->phoneBtn->text();
+}
+
+void Sign_In::cleanLineEdit()
+{
+   ui->fullNameBtn->clear();
+   ui->passwordBtn->clear();
+   ui->emailBtn->clear();
+   ui->phoneBtn->clear();
+
+}
+
+Sign_In::~Sign_In()
+{
+    delete ui;
+}
+#include "updateProfile.h"
+#include "ui_updateProfile.h"
+
+updateProfile::updateProfile(QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::updateProfile)
+{
+    ui->setupUi(this);
+    this->setFixedSize(350, 400);   //fix screen size
+    this->setWindowTitle("Change profile");
+}
+
+updateProfile::~updateProfile()
+{
+    delete ui;
+}
+
+void updateProfile::paintEvent(QPaintEvent *)
+{
+    //set background image
+    QPainter painter(this);
+    QPixmap pix;
+    pix.load(":/images/rose2.png");
+    painter.drawPixmap(0,0,pix);
+
+}
+
+void updateProfile::onupdateBtnclicked()
+{
+
+    //get the input of users
+    QString currentName = ui->currentlName->text();
+    QString newEmail = ui->newEmail->text();
+    QString newPhone = ui->newPhoneNumber->text();
+    QString newPassword = ui->newPassword->text();
+
+
+    QString getData;
+    //count（*） is to determine how many the currentName have in database
+    getData = "select count (*) from users where userName='"+currentName+"'";
+    QSqlQueryModel *modelx = new QSqlQueryModel;
+    modelx->setQuery(getData);
+    QModelIndex index1 = modelx->index(0,0);
+    if(index1.data() == 0)
+    {
+        QMessageBox::information(this, "change failed", "Change failed, Check your name");
+    }
+    else if(currentName.isEmpty() || newEmail.isEmpty() || newPhone.isEmpty() || newPassword.isEmpty())
+    {
+        QMessageBox::about(this, "change failed", "Please fill in all the information");
+    }
+    else
+    {
+        QString getData2;
+        QSqlQueryModel *model2 = new QSqlQueryModel;
+        getData2 = "update users set email ='"+newEmail+"',phoneNumber='"+newPhone+"',"
+                    "password='"+newPassword+"' where userName='"+currentName+"'";
+        model2->setQuery(getData2);
+
+        QMessageBox::information(this, "successed", "update successed");
+        this->hide();
+    }
+
+}
+
+
+void updateProfile::oncancelBtnclicked()
+{
+    this->hide();
+}
